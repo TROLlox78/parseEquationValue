@@ -1,3 +1,6 @@
+from curses.ascii import isdigit
+import decimal
+from pickletools import read_stringnl_noescape_pair
 from openpyxl import load_workbook
 import pytexit
 workbook = load_workbook(filename="aa.xlsx" )
@@ -24,17 +27,27 @@ def find_cell(s:str):
             digitphase = True
         elif digitphase and not ch.isdigit():
             return out
+        else:
+            return ''
 
         i+=1
     return out
 
+from math import sqrt
+
+def clean_formula(val):
+    val= val.replace('^','**')
+    val = val.replace("SQRT" , 'sqrt')
+    val = val.replace("-0" , '-')
+    return val
 
 def extract_values(cell):
     # finds the equation and values in the cell and builds a string
     s = ''
     skip_chr = 0;
     cell_value = sheet[cell].value
-
+    if not cell_value:
+        return "0"
     if isinstance(cell_value,(int,float)) :
         return str(cell_value)
     for i in range(1,len(cell_value)):
@@ -43,11 +56,12 @@ def extract_values(cell):
             continue;
         newcell = find_cell(cell_value[i:])
         if len(newcell) >0:
-            s+= extract_values(newcell)
+            values = clean_formula(extract_values(newcell))
+            s+= str(eval(values))
             skip_chr = len(newcell)-1
         else:
             s+=cell_value[i]
-    return s
+    return clean_formula(s)
 
 def shorten(s:str):
     i = 0
@@ -58,21 +72,54 @@ def shorten(s:str):
             return s[:i]
         
 
+def float_killer(s, round_to):
+    check_num = False;
+    decimal_point = False;
+    s = repr(s)
+
+
+    new_s = ''
+    for ch in s:
+        if ch.isdigit() and not check_num:
+            check_num = True
+            decimal_point = False
+        if check_num:
+            if ch.isdigit() and not decimal_point:
+                new_s +=ch
+            if ch == '.':
+                count = 0
+                decimal_point = True
+                new_s+=ch
+            if decimal_point and ch.isdigit():
+                count+=1
+                if count<round_to:
+                    new_s +=ch
+            if not ch.isdigit() and ch != '.':
+                check_num = False;
+                new_s+=ch
+        else:
+            new_s +=ch
+    return new_s
+
 def extract(cells):
     for cell in cells:
         equation =extract_values(cell)
         print(cell)
         latex = pytexit.py2tex(equation, print_latex=False)
+
         #print(latex + " = " + shorten(str(eval(equation))))
 
 
 
-cells = []
 
-for i in range(31,54):
-    if i==35 or i==36 or i ==47:
-        continue
-    cells.append(str('S'+str(i)))
 
 if __name__ == "__main__":
-    extract(cells)
+    cells = []
+
+    for i in range(31,54):
+        cells.append(str('S'+str(i)))
+       
+    #extract(cells)
+    print(float_killer(
+        "$$\frac{0.5079063883617962}{25}$$"
+     ,4))
