@@ -3,8 +3,11 @@ import decimal
 from pickletools import read_stringnl_noescape_pair
 from openpyxl import load_workbook
 import pytexit
-workbook = load_workbook(filename="aa.xlsx" )
+filename = "aa.xlsx"
+workbook = load_workbook(filename=filename )
+workbook_data = load_workbook(filename=filename, data_only=True )
 sheet = workbook.active
+datasheet = workbook_data.active
 
 
 def find_cell(s:str):
@@ -41,11 +44,10 @@ def clean_formula(val):
     val = val.replace("-0" , '-')
     return val
 
-def extract_values(cell):
+def extract_values(cell_value):
     # finds the equation and values in the cell and builds a string
     s = ''
     skip_chr = 0;
-    cell_value = sheet[cell].value
     if not cell_value:
         return "0"
     if isinstance(cell_value,(int,float)) :
@@ -56,7 +58,7 @@ def extract_values(cell):
             continue;
         newcell = find_cell(cell_value[i:])
         if len(newcell) >0:
-            values = clean_formula(extract_values(newcell))
+            values = clean_formula(extract_values(sheet[newcell].value))
             s+= str(eval(values))
             skip_chr = len(newcell)-1
         else:
@@ -77,6 +79,8 @@ def float_killer(s, round_to):
     decimal_point = False;
     s = repr(s)
 
+    if round_to==0:
+        return s
 
     new_s = ''
     for ch in s:
@@ -101,12 +105,11 @@ def float_killer(s, round_to):
             new_s +=ch
     return new_s
 
-def extract(cells):
-    for cell in cells:
-        equation =extract_values(cell)
-        print(cell)
-        latex = pytexit.py2tex(equation, print_latex=False)
-
+def extract(cell):
+    
+    equation =extract_values(cell)
+    latex = pytexit.py2tex(equation, print_latex=False, print_formula=False)
+    return latex
         #print(latex + " = " + shorten(str(eval(equation))))
 
 
@@ -115,11 +118,10 @@ def extract(cells):
 
 if __name__ == "__main__":
     cells = []
-
-    for i in range(31,54):
-        cells.append(str('S'+str(i)))
-       
-    #extract(cells)
-    print(float_killer(
-        "$$\frac{0.5079063883617962}{25}$$"
-     ,4))
+    search_col = 26
+    for i in range(31,53):
+        name = sheet.cell(row=i, column=search_col-1).value
+        #print(sheet.cell(row=i, column=search_col).value[1:])
+        latex = extract(sheet.cell(row=i, column=search_col).value)
+        value = float_killer(datasheet.cell(row=i, column=search_col).value,0)
+        print(f'{name} = {latex} = {value}')
