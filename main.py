@@ -118,8 +118,8 @@ def extract(cell):
 
 if __name__ == "__main__":
     cells = []
-    search_col = 26
-    for i in range(31,53):
+    search_col = 29+3
+    for i in range(31,70):
         name = sheet.cell(row=i, column=search_col-1).value
         #print(sheet.cell(row=i, column=search_col).value[1:])
         latex = extract(sheet.cell(row=i, column=search_col).value)
