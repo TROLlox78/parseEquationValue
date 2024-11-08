@@ -3,7 +3,7 @@ import decimal
 from pickletools import read_stringnl_noescape_pair
 from openpyxl import load_workbook
 import pytexit
-filename = "aa.xlsx"
+filename = "lab_6.xlsx"
 workbook = load_workbook(filename=filename )
 workbook_data = load_workbook(filename=filename, data_only=True )
 sheet = workbook.active
@@ -118,8 +118,15 @@ def extract(cell):
 
 if __name__ == "__main__":
     cells = []
-    search_col = 29+3
-    for i in range(31,70):
+
+    # set cell search scope
+    start_cell = 12
+    end_cell   = 18
+    value_letter = 'w'
+
+
+    search_col = int(ord(value_letter))-int(ord('a'))+1
+    for i in range(start_cell,end_cell):
         name = sheet.cell(row=i, column=search_col-1).value
         #print(sheet.cell(row=i, column=search_col).value[1:])
         latex = extract(sheet.cell(row=i, column=search_col).value)
