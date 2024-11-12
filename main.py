@@ -16,30 +16,15 @@ datasheet = workbook_data.active
 
 
 def find_cell(s:str):
-    # finds the first cell in string; like A5 or BC52
-    i=0
-    out = ''
-    digitphase = False
-    first = True
-    while i!=len(s):
-        ch = s[i]
-        if first:
-            if not ch.isalpha() and not ch.isupper() :
-                return ''
-            else:
-                first = False;
-        if ch.isalpha() and ch.isupper() and not digitphase:
-            out+=ch
-        elif ch.isdigit() and len(out)>0:
-            out+=ch
-            digitphase = True
-        elif digitphase and not ch.isdigit():
-            return out
-        else:
-            return ''
-
-        i+=1
-    return out
+    # returns if string begins with cell eg. "A5", "BC52"
+    # if doesnt find, return empty string
+    
+    find_cell_reg = r"^[A-Z]+\d+"
+    match = re.search(find_cell_reg,s)
+    if match:
+        return str(match.group(0))
+    else:
+        return ''
 
 # this is necessary
 from math import sqrt
@@ -49,7 +34,7 @@ def clean_formula(val):
     val= val.replace('^','**')
     val = val.replace("SQRT" , 'sqrt')
     val = val.replace("-0" , '-')
-    #val = val.replace("PI()" , '3.14')
+    val = val.replace("PI()" , '3.14')
     return val
 
 def extract_values(cell_value):
@@ -65,7 +50,7 @@ def extract_values(cell_value):
             skip_chr-=1;
             continue;
         newcell = find_cell(cell_value[i:])
-        if len(newcell) >0:
+        if newcell:
             values = clean_formula(extract_values(sheet[newcell].value))
             s+= str(eval(values))
             skip_chr = len(newcell)-1
@@ -133,5 +118,6 @@ if __name__ == "__main__":
         value = datasheet.cell(row=i, column=search_col).value
 
         output = reduce_floats(f'{cell_name} = {latex} = {value}',2)
-        print(f'{cell_name} = {latex} = {value}')
+        #print(f'{cell_name} = {latex} = {value}')
         print(output)
+        #print((sheet.cell(row=i, column=search_col).value))
