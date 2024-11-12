@@ -37,32 +37,31 @@ def clean_formula(val):
     val = val.replace("PI()" , '3.14')
     return val
 
-def extract_values(cell_value):
+def build_equation(cell_value):
     # finds the equation and values in the cell and builds a string
     s = ''
-    skip_chr = 0;
+    i = 1
     if not cell_value:
         return "0"
     if isinstance(cell_value,(int,float)) :
         return str(cell_value)
-    for i in range(1,len(cell_value)):
-        if skip_chr>0:
-            skip_chr-=1;
-            continue;
+
+    while i != len(cell_value):
         newcell = find_cell(cell_value[i:])
         if newcell:
-            values = clean_formula(extract_values(sheet[newcell].value))
-            s+= str(eval(values))
-            skip_chr = len(newcell)-1
+            values = clean_formula(build_equation(sheet[newcell].value))
+            s += str(eval(values))
+            i += len(newcell)-1
         else:
             s+=cell_value[i]
+        i+=1
     return clean_formula(s)
 
         
 
-def extract(cell):
+def create_latex(cell):
     # creates latex 
-    equation =extract_values(cell)
+    equation =build_equation(cell)
     latex = pytexit.py2tex(equation, print_latex=False, print_formula=False)
     return latex
 
@@ -114,7 +113,7 @@ if __name__ == "__main__":
     for i in range(start_cell,end_cell):
         cell_name = sheet.cell(row=i, column=search_col-1).value
         #print(sheet.cell(row=i, column=search_col).value[1:])
-        latex = extract(sheet.cell(row=i, column=search_col).value)
+        latex = create_latex(sheet.cell(row=i, column=search_col).value)
         value = datasheet.cell(row=i, column=search_col).value
 
         output = reduce_floats(f'{cell_name} = {latex} = {value}',2)
